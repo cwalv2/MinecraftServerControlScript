@@ -159,7 +159,6 @@ LOCATION="/home/$USER_NAME"
 JAVA=$(which java)
 PERL=$(which perl)
 PYTHON=$(which python)
-RSYNC=$(which rsync)
 WGET=$(which wget)
 RDIFF_BACKUP=$(which rdiff-backup)
 SOCAT=$(which socat)
@@ -602,7 +601,7 @@ getCurrentMinecraftVersion() {
   fi
   # Download the versions.json file if it does not exist.
   if [ ! -s $VERSIONS_JSON ]; then
-    execute "$WGET -qO \"$VERSIONS_JSON\" \"$MINECRAFT_VERSIONS_URL\"" $USER_NAME
+    execute "$WGET --no-use-server-timestamps -qO \"$VERSIONS_JSON\" \"$MINECRAFT_VERSIONS_URL\"" $USER_NAME
     if [ $? -ne 0 ]; then
       if [ -s $VERSIONS_JSON.bak ]; then
         printf "Error downloading the Minecraft versions.json file, using an old copy.\n"
@@ -1231,7 +1230,7 @@ worldBackupRestore() {
 # @param 1 The world to update.
 # ---------------------------------------------------------------------------
 updateClientSoftware() {
-  local CLIENT_DURATION CLIENT_JAR CLIENT_LOCATION CLIENT_URL
+  local CLIENT_JAR CLIENT_LOCATION CLIENT_URL
   CLIENT_JAR=$(getClientJar "$1")
   if [ $? -ne 0 ]; then
     printf "$CLIENT_JAR\n"
@@ -1249,12 +1248,6 @@ updateClientSoftware() {
   fi
   # Make sure the client software directory exists.
   execute "mkdir -p $CLIENT_LOCATION" $USER_NAME
-  # The timeout (in minutes) for the client jar file.
-  CLIENT_DURATION=1440
-  # Delete the client jar file if it is old.
-  if [ -s "$CLIENT_LOCATION/$CLIENT_JAR" ]; then
-    execute "find $CLIENT_LOCATION/$CLIENT_JAR -mmin +$CLIENT_DURATION -delete" $USER_NAME
-  fi
   # Download the client jar if it is missing.
   if [ ! -s "$CLIENT_LOCATION/$CLIENT_JAR" ]; then
     # Download the Minecraft client software.
@@ -1273,7 +1266,7 @@ updateClientSoftware() {
 # @param 1 The world server to update.
 # ---------------------------------------------------------------------------
 updateServerSoftware() {
-  local SERVER_DURATION SERVER_JAR SERVER_LOCATION SERVER_URL
+  local SERVER_JAR SERVER_LOCATION SERVER_URL
   SERVER_JAR=$(getServerJar "$1")
   if [ $? -ne 0 ]; then
     printf "$SERVER_JAR\n"
@@ -1291,12 +1284,6 @@ updateServerSoftware() {
   fi
   # Make sure the server software directory exists.
   execute "mkdir -p $SERVER_LOCATION" $USER_NAME
-  # The timeout (in minutes) for the server jar file.
-  SERVER_DURATION=1440
-  # Delete the server jar file if it is old.
-  if [ -s "$SERVER_LOCATION/$SERVER_JAR" ]; then
-    execute "find $SERVER_LOCATION/$SERVER_JAR -mmin +$SERVER_DURATION -delete" $USER_NAME
-  fi
   # Download the server jar if it is missing.
   if [ ! -s "$SERVER_LOCATION/$SERVER_JAR" ]; then
     # Download the Minecraft server software.
@@ -1622,7 +1609,7 @@ if [ -f "$MSCS_DEFAULTS" ]; then
   . $MSCS_DEFAULTS
 fi
 
-# Make sure that Java, Perl, Python, Rsync, and GNU Wget are installed.
+# Make sure that Java, Perl, Python, Wget, Rdiff-backup, and Socat are installed.
 if [ ! -e "$JAVA" ]; then
   printf "ERROR: Java not found!\n"
   printf "Try installing this with:\n"
@@ -1639,12 +1626,6 @@ if [ ! -e "$PYTHON" ]; then
   printf "ERROR: Python not found!\n"
   printf "Try installing this with:\n"
   printf "sudo apt-get install python\n"
-  exit 1
-fi
-if [ ! -e "$RSYNC" ] && [ $ENABLE_MIRROR -eq 1 ]; then
-  printf "ERROR: Rsync not found!\n"
-  printf "Try installing this with:\n"
-  printf "sudo apt-get install rsync\n"
   exit 1
 fi
 if [ ! -e "$WGET" ]; then
